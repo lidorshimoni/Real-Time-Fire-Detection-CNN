@@ -16,7 +16,9 @@ from keras.layers import Dense, Dropout, Activation, Flatten
 # example of progressively loading images from file
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
-
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation, Flatten
+from keras.layers import Conv2D, MaxPooling2D, BatchNormalization
 import matplotlib.pyplot as plt
 
 import numpy as np
