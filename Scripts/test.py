@@ -19,6 +19,7 @@ from keras.models import load_model
 
 import matplotlib.pyplot as plt
 
+import numpy as np
 # create generator
 datagen = ImageDataGenerator(rescale=1/255)
 
@@ -27,28 +28,29 @@ num_classes = 3
 epochs = 50
 data_augmentation = False
 num_predictions = 20
-save_dir = os.path.join(os.getcwd(), 'saved_models')
+main_dir = "/home/lidor/Desktop/ML/Real-Time-Fire-Detection-CNN/"
+save_dir = main_dir + "Trained Models/"
 model_name = 'Fire_detection_vgg16_trained_model.h5'
-data_dir = save_dir = os.path.join(os.getcwd(), 'FIRE-SMOKE-DATASET')
+data_dir = main_dir + 'FIRE-SMOKE-DATASET'
 
 
-X_train = datagen.flow_from_directory(data_dir + '/Train/',
-                                    class_mode='categorical',
-                                    batch_size=batch_size,
-                                    target_size=(150, 150),
-                                    shuffle=True
-                                    )
-
-# load and iterate test dataset
-X_test = datagen.flow_from_directory(data_dir + '/Test/',
-                                   class_mode='categorical',
-                                   batch_size=batch_size,
-                                   target_size=(150, 150),
-                                    shuffle=True
-                                   )
+# X_train = datagen.flow_from_directory(data_dir + '/Train/',
+#                                     class_mode='categorical',
+#                                     batch_size=batch_size,
+#                                     target_size=(150, 150),
+#                                     shuffle=True
+#                                     )
+#
+# # load and iterate test dataset
+# X_test = datagen.flow_from_directory(data_dir + '/Test/',
+#                                    class_mode='categorical',
+#                                    batch_size=batch_size,
+#                                    target_size=(150, 150),
+#                                     shuffle=True
+#                                    )
 
 #Trained Models
-model = load_model("1/" + model_name)
+model = load_model(save_dir + model_name)
 for layer in model.layers:
     layer.trainable = False
 
@@ -56,18 +58,6 @@ for layer in model.layers:
 model.compile(optimizer='rmsprop',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
-
-
-
-def train():
-    model.fit_generator(generator=X_train,
-                        validation_data=X_test,
-                        epochs=epochs,
-                        steps_per_epoch=100,
-                        validation_steps=100
-    )
-
 
 
 def save():
@@ -78,11 +68,19 @@ def save():
     model.save(model_path)
     print('Saved trained model at %s ' % model_path)
 
+#
+# def score():
+#     # Score trained model.
+#     scores = model.evaluate_generator(generator=X_test, steps=20)
+#     print('Test loss:', scores[0])
+#     print('Test accuracy:', scores[1])
 
-def score():
-    # Score trained model.
-    scores = model.evaluate_generator(generator=X_test, steps=20)
-    print('Test loss:', scores[0])
-    print('Test accuracy:', scores[1])
+img = np.ndarray(shape=(4,150,150,3))
 
-score()
+for i in range(1,4):
+    img[i] = plt.imread(main_dir + 'test' + str(i) +'.jpg')
+    print(model.predict(img)[i].argmax())
+
+from keras.utils import plot_model
+plot_model(model, to_file='model.png')
+#0=fire 1=neutral 2=smoke

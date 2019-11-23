@@ -47,7 +47,7 @@ X_test = datagen.flow_from_directory(data_dir + '/Test/',
 
 
 model = load_model("Trained Models/" + model_name)
-for layer in model.layers:
+for layer in model.layers[:-3]:
     layer.trainable = False
 
 
