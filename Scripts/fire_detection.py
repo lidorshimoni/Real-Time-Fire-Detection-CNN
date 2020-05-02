@@ -10,7 +10,7 @@ from keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
 
 # create generator
-datagen = ImageDataGenerator(rescale=1/255,
+datagen = ImageDataGenerator(rescale=1 / 255,
                              featurewise_center=False,  # set input mean to 0 over the dataset
                              samplewise_center=False,  # set each sample mean to 0
                              featurewise_std_normalization=False,  # divide inputs by std of the dataset
@@ -37,30 +37,37 @@ datagen = ImageDataGenerator(rescale=1/255,
                              # fraction of images reserved for validation (strictly between 0 and 1)
                              validation_split=0.0)
 
-
-batch_size = 10
+batch_size = 64
 num_classes = 3
-epochs = 50
+epochs = 20
 num_predictions = 20
-save_dir = os.path.join(os.getcwd(), 'saved_models')
-model_name = 'Fire_detection_vgg16_trained_model.h5'
+# save_dir = os.path.join(os.getcwd(), 'saved_models')
 
-data_dir = save_dir = os.path.join(os.getcwd(), 'FIRE-SMOKE-DATASET')
+# data_dir = save_dir = os.path.join(os.getcwd(), 'FIRE-SMOKE-DATASET')
+main_dir = r"C:\Users\king\Desktop\2DO\Real-Time-Fire-Detection-CNN-master/"
+save_dir = main_dir + "Trained Models/"
+model_name = 'Fire_detection_vgg16_trained_model.h5'
+data_dir = main_dir + 'FIRE-SMOKE-DATASET'
+log_dir = main_dir + "logs/"
+
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+
+early_stop = EarlyStopping(monitor='loss', min_delta=0.001, patience=3, mode='min', verbose=1)
+checkpoint = ModelCheckpoint(save_dir + 'model_best_weights.h5', monitor='loss', verbose=1, save_best_only=True,
+                             mode='min', period=1)
+tensorboard_callback = keras.callbacks.TensorBoard(log_dir=log_dir)
 
 
 X_train = datagen.flow_from_directory(data_dir + '/Train/',
-                                    class_mode='categorical',
-                                    batch_size=batch_size,
-                                    target_size=(150, 150)
-                                    )
+                                      class_mode='categorical',
+                                      batch_size=batch_size,
+                                      target_size=(150, 150))
 
 # load and iterate test dataset
 X_test = datagen.flow_from_directory(data_dir + '/Test/',
-                                   class_mode='categorical',
-                                   batch_size=batch_size,
-                                   target_size=(150, 150)
-                                   )
-
+                                     class_mode='categorical',
+                                     batch_size=batch_size,
+                                     target_size=(150, 150))
 
 base_model = keras.applications.vgg16.VGG16(include_top=False,
                                             weights='imagenet',
@@ -80,12 +87,9 @@ model = keras.models.Model(inputs=base_model.input, outputs=top_model)
 for layer in base_model.layers:
     layer.trainable = False
 
-
 model.compile(optimizer='rmsprop',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
-
-
 
 
 def train():
@@ -93,9 +97,9 @@ def train():
                         validation_data=X_test,
                         epochs=epochs,
                         steps_per_epoch=100,
-                        validation_steps=100
-    )
-
+                        validation_steps=100,
+                        callbacks=[early_stop, checkpoint, tensorboard_callback],
+                        )
 
 
 def save():
@@ -113,7 +117,11 @@ def score():
     print('Test loss:', scores[0])
     print('Test accuracy:', scores[1])
 
+
 def learn():
     train()
     save()
     score()
+
+
+learn()
